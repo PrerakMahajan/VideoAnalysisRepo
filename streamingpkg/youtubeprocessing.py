@@ -2,20 +2,23 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from googleapiclient.discovery import build
 import pandas as pd
 from oauth2client.tools import argparser
-
+import iso8601
+import pytz
 from streamingpkg.textformatting import *
 
 
-#GLOBAL Variables
-videoMetaDatadf = pd.DataFrame(columns=['title', 'publishedAt', 'description', 'channelTitle'])
+# GLOBAL Variables
+videoMetaDatadf = pd.DataFrame(columns=['searchedKeyword','title', 'publishedAt', 'description', 'channelTitle'])
 Captiondf = pd.DataFrame(columns=['Caption'])
+videoMetaDatadf.index.names = ['VideoID']
+Captiondf.index.names = ['VideoID']
 
 def getyoutubecaptions(SearchKeyword):
 
-    search_response = __setyoutubeconf(SearchKeyword,maxResults=4)
-    __Search(search_response)       #Populates videoMetaDatadf
+    search_response = __setyoutubeconf(SearchKeyword,maxResults=2)
+    __Search(SearchKeyword,search_response)       # Populates videoMetaDatadf
 
-    #VideoId and its Transcript
+    # VideoId and its Transcript
 
     for eac in videoMetaDatadf.index.values:
         vid_data = YouTubeTranscriptApi.get_transcript(eac, languages=['en'])
@@ -33,9 +36,14 @@ def getyoutubecaptions(SearchKeyword):
 
 
             global Captiondf
+            # Captiondf.loc[eac, 'Caption'] = fullTextString
             Captiondf.loc[eac,'Caption']=getPunctuatedText(fullTextString)
 
-    #print("___________CaptionDataFrame\n",Captiondf)
+    # print(Captiondf[Captiondf.index.duplicated(keep=False)])
+    # print(Captiondf.index.get_duplicates())
+    # ids = Captiondf["title"]
+    # Captiondf[ids.isin(ids[ids.duplicated()])].sort("title")
+    # print("___________CaptionDataFrame\n",Captiondf)
     return 0
 
 
@@ -52,21 +60,23 @@ def __setyoutubeconf(SearchKeyword,maxResults):
     search_response = youtube.search().list(
         q=SearchKeyword,
         type="video",
+        #order="viewCount",
         order="relevance",
         part="id,snippet",
         maxResults=maxResults,
-        videoCaption="closedCaption",
-        eventType="completed",
+        #videoCaption="closedCaption",
+        #eventType="completed",
         publishedAfter=None,
         publishedBefore=None,
-        topicId="Business,Technology"
+        #regionCode='IN'
+        #topicId="Business,Technology"
     ).execute()
     #print("Search Response,",search_response)
     return search_response
 
 
 
-def __Search(search_response):
+def __Search(SearchKeyword,search_response):
 
     videos = {}
 
@@ -75,10 +85,15 @@ def __Search(search_response):
             #print(search_result["snippet"]["title"])
             #Videos is a KV Dictionary
             #search_response is a JSON
+            _date_obj = iso8601.parse_date(search_result["snippet"]["publishedAt"])
+            _date_utc = _date_obj.astimezone(pytz.utc)
+            _date_utc_zformat = _date_utc.strftime('%d-%m-%Y')
 
             key=search_result["id"]["videoId"]
-            d = {'title': search_result["snippet"]["title"], \
-                 'publishedAt': search_result["snippet"]["publishedAt"],\
+            d = {
+                'searchedKeyword':SearchKeyword, \
+                'title': search_result["snippet"]["title"], \
+                 'publishedAt': _date_utc_zformat,\
                  'description':search_result["snippet"]["description"], \
                  'channelTitle':search_result["snippet"]["channelTitle"]
                  }
