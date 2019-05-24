@@ -5,11 +5,16 @@ from oauth2client.tools import argparser
 import iso8601
 import pytz
 from streamingpkg.textformatting import *
+from nltk import tokenize
 
 
 # GLOBAL Variables
 videoMetaDatadf = pd.DataFrame(columns=['searchedKeyword','title', 'publishedAt', 'description', 'channelTitle'])
 Captiondf = pd.DataFrame(columns=['Caption'])
+
+Testdf= pd.DataFrame(columns=['Sentence'])
+tempdf = pd.DataFrame(columns=['Sentence'])
+
 videoMetaDatadf.index.names = ['VideoID']
 Captiondf.index.names = ['VideoID']
 
@@ -34,10 +39,25 @@ def getyoutubecaptions(SearchKeyword):
                 i += 1
             # Add to Dataframe --> eac as 'Key' and to 'Caption' column data whose value is fullTextString
 
+            punctext= getPunctuatedText(fullTextString)
+
+            ################Testing DATAFRAME#############
+            Sentence_list = tokenize.sent_tokenize(punctext)
+            l=0
+
+            while (l < len(Sentence_list)):
+                global tempdf
+                tempdf.loc[eac, 'Sentence'] = Sentence_list[l]
+                global Testdf
+                Testdf = Testdf.append(tempdf)
+                l=l+1
+            print(Testdf)
+
+            #############################################
 
             global Captiondf
             # Captiondf.loc[eac, 'Caption'] = fullTextString
-            Captiondf.loc[eac,'Caption']=getPunctuatedText(fullTextString)
+            Captiondf.loc[eac,'Caption']=getPunctuatedText(punctext)
 
     # print(Captiondf[Captiondf.index.duplicated(keep=False)])
     # print(Captiondf.index.get_duplicates())
