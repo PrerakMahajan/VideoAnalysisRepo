@@ -52,6 +52,7 @@ def getyoutubecaptions(SearchKeyword):
                 global Testdf
                 Testdf = Testdf.append(tempdf)
                 l=l+1
+            tempdf.drop(tempdf.index, inplace=True)
             print(Testdf)
 
             #############################################
