@@ -18,6 +18,8 @@ tempdf = pd.DataFrame(columns=['Sentence'])
 
 videoMetaDatadf.index.names = ['VideoID']
 Captiondf.index.names = ['VideoID']
+####
+tempdf1 = pd.DataFrame(columns=['videoId','Sentence'])
 
 def getyoutubecaptions(SearchKeyword):
 
@@ -42,6 +44,22 @@ def getyoutubecaptions(SearchKeyword):
 
             punctext= getPunctuatedText(fullTextString)
 
+             ################Testing DATAFRAME 2#############
+            l = 0
+            global tempdf1  ##For All videos
+
+            while (l < len(Sentence_list)):
+                # print(Sentence_list[l])
+                tempdf1 = tempdf1.append({'videoId':eac,'Sentence':Sentence_list[l]},ignore_index=True)
+                l=l+1
+            print(tempdf1)
+
+            #########ExtractTag#####
+
+            getTags(tempdf1)
+            ########################
+            
+            '''
             ################Testing DATAFRAME#############
             Sentence_list = tokenize.sent_tokenize(punctext)
             l=0
@@ -56,7 +74,8 @@ def getyoutubecaptions(SearchKeyword):
             print(Testdf)
 
             #############################################
-
+            '''
+            
             global Captiondf
             # Captiondf.loc[eac, 'Caption'] = fullTextString
             Captiondf.loc[eac,'Caption']=getPunctuatedText(punctext)
